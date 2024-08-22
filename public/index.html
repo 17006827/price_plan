@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone Bill Calculator</title>
+    <script src="//unpkg.com/alpinejs" defer></script>
+</head>
+<body>
+    <div x-data="phoneBillWidget">
+        <form @submit.prevent="calculateBill">
+            <select x-model="selectedPlan">
+                <option value="">Select a plan</option>
+                <template x-for="plan in plans" :key="plan.id">
+                    <option :value="plan.plan_name" x-text="plan.plan_name"></option>
+                </template>
+            </select>
+            <input type="text" x-model="actions" placeholder="call, sms, call">
+            <button type="submit">Calculate</button>
+        </form>
+
+        <div x-text="total"></div>
+    </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('phoneBillWidget', () => ({
+                plans: [],
+                selectedPlan: '',
+                actions: '',
+                total: '',
+
+                async init() {
+                    const res = await fetch('/api/price_plans');
+                    this.plans = await res.json();
+                },
+
+                async calculateBill() {
+                    const res = await fetch('/api/phonebill', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            price_plan: this.selectedPlan,
+                            actions: this.actions
+                        })
+                    });
+                    const data = await res.json();
+                    this.total = data.total;
+                }
+            }));
+        });
+    </script>
+</body>
+</html>
