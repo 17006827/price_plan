@@ -1,54 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phone Bill Calculator</title>
-    <script src="//unpkg.com/alpinejs" defer></script>
-</head>
-<body>
-    <div x-data="phoneBillWidget">
-        <form @submit.prevent="calculateBill">
-            <select x-model="selectedPlan">
-                <option value="">Select a plan</option>
-                <template x-for="plan in plans" :key="plan.id">
-                    <option :value="plan.plan_name" x-text="plan.plan_name"></option>
-                </template>
-            </select>
-            <input type="text" x-model="actions" placeholder="call, sms, call">
-            <button type="submit">Calculate</button>
-        </form>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Price Plan Management</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+    <script src="./aphine.js"></script>
+  </head>
+  <body>
+    <div x-data="price_plan" x-init="init()">
+      <h1>Price Plan Widget</h1>
+      <div x-data="pricePlansFetcher()" x-init="fetchPricePlans" class="container">
+        <h2>Load Price Plans</h2>
+        
+        <div x-show="loading">
+          <p>Loading...</p>
+        </div>
 
-        <div x-text="total"></div>
+        <div x-show="error" class="alert alert-danger">
+          <span x-text="error"></span>
+        </div>
+
+        <table
+          x-show="pricePlans.length > 0"
+          border="1"
+          cellpadding="5"
+          cellspacing="0"
+        >
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Plan Name</th>
+              <th>SMS Price</th>
+              <th>Call Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="plan in pricePlans" :key="plan.id">
+              <tr>
+                <td x-text="plan.id"></td>
+                <td x-text="plan.plan_name"></td>
+                <td>R<span x-text="plan.sms_price"></span></td>
+                <td>R<span x-text="plan.call_price"></span></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+        <button @click="fetchPricePlans">Load Price Plans</button>
+      </div>
+    </br>
+
+      <div x-data="phoneBillCalculator()" class="container">
+        <h2>Calculate Phone Bill</h2>
+        <input type="text" x-model="pricePlan" placeholder="Enter price plan" />
+        <input
+          type="text"
+          x-model="actions"
+          placeholder="Enter actions (e.g., 'call, sms, call')"
+        />
+        <button @click="calculatePhoneBill">Calculate</button>
+
+        <div x-show="result" class="alert alert-success">
+          Total: <span x-text="result"></span>
+        </div>
+
+        <div x-show="error" class="alert alert-danger">
+          <span x-text="error"></span>
+        </div>
+      </div>
+    </br>
+
+      <div x-data="pricePlanCreator()" class="container">
+        <h2>Create Price Plan</h2>
+        <input type="text" x-model="name" placeholder="Enter price plan name" />
+        <input
+          type="number"
+          x-model="callCost"
+          placeholder="Enter call cost"
+          step="0.01"
+        />
+        <input
+          type="number"
+          x-model="smsCost"
+          placeholder="Enter SMS cost"
+          step="0.01"
+        />
+        <button @click="createPricePlan">Create Price Plan</button>
+
+        <div x-show="error" class="alert alert-danger">
+          <span x-text="error"></span>
+        </div>
+      </div>
+    </br>
+
+      <div x-data="pricePlanUpdater()" class="container">
+        <h2>Update Price Plan</h2>
+        <input type="text" x-model="name" placeholder="Enter price plan name" />
+        <input
+          type="number"
+          x-model="callCost"
+          placeholder="Enter new call cost"
+          step="0.01"
+        />
+        <input
+          type="number"
+          x-model="smsCost"
+          placeholder="Enter new SMS cost"
+          step="0.01"
+        />
+        <button @click="updatePricePlan">Update Price Plan</button>
+
+      </div>
+    </br>
+
+      <div x-data="pricePlanDeleter()" class="container">
+        <h2>Delete Price Plan</h2>
+        <input
+          type="number"
+          x-model="id"
+          placeholder="Enter price plan ID to delete"
+        />
+        <button @click="deletePricePlan">Delete Price Plan</button>
+
+        </div>
+      </div>
     </div>
-
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('phoneBillWidget', () => ({
-                plans: [],
-                selectedPlan: '',
-                actions: '',
-                total: '',
-
-                async init() {
-                    const res = await fetch('/api/price_plans');
-                    this.plans = await res.json();
-                },
-
-                async calculateBill() {
-                    const res = await fetch('/api/phonebill', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            price_plan: this.selectedPlan,
-                            actions: this.actions
-                        })
-                    });
-                    const data = await res.json();
-                    this.total = data.total;
-                }
-            }));
-        });
-    </script>
-</body>
+  </body>
 </html>
